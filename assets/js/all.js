@@ -84,6 +84,9 @@ document.addEventListener('DOMContentLoaded', function() {
   const cardsContainer = document.querySelector('.cards-container');
   const cards = document.querySelector('.cards');
 
+  // Проверяем, что мы на desktop устройстве (не тачскрин)
+  const isDesktop = !('ontouchstart' in window) || window.matchMedia('(hover: hover)').matches;
+
   if (cardsContainer && cards) {
     // Получаем ширину одной карточки с учетом gap
     function getCardWidth() {
@@ -96,6 +99,11 @@ document.addEventListener('DOMContentLoaded', function() {
       return cardWidth + gap;
     }
 
+    // Функция обновления состояния кнопок (если они есть)
+    function updateButtons() {
+      // Здесь можно добавить логику для обновления кнопок навигации
+      // Пока оставляем пустой, так как кнопок нет в HTML
+    }
 
     // Обновляем состояние кнопок при прокрутке
     cardsContainer.addEventListener('scroll', updateButtons);
@@ -103,48 +111,48 @@ document.addEventListener('DOMContentLoaded', function() {
     // Начальная проверка состояния кнопок
     updateButtons();
 
-    // Обработка колесика мыши для горизонтального скролла
-    cardsContainer.addEventListener('wheel', function(e) {
-      // Если зажат Shift, позволяем обычную вертикальную прокрутку
-      if (e.shiftKey) return;
+    // Обработка колесика мыши для горизонтального скролла (только для ПК)
+    if (isDesktop) {
+      cardsContainer.addEventListener('wheel', function(e) {
+        // Всегда конвертируем вертикальную прокрутку в горизонтальную для ПК
+        e.preventDefault();
 
-      e.preventDefault();
+        // Конвертируем вертикальную прокрутку в горизонтальную
+        const scrollAmount = e.deltaY * 2; // Увеличиваем чувствительность
+        cardsContainer.scrollBy({
+          left: scrollAmount,
+          behavior: 'auto' // Используем auto для более плавного скролла
+        });
+      }, { passive: false });
 
-      // Конвертируем вертикальную прокрутку в горизонтальную
-      const scrollAmount = e.deltaY * 2; // Увеличиваем чувствительность
-      cardsContainer.scrollBy({
-        left: scrollAmount,
-        behavior: 'smooth'
+      // Поддержка перетаскивания мышью (только для ПК)
+      let isDragging = false;
+      let startDragX = 0;
+      let scrollStartX = 0;
+
+      cardsContainer.addEventListener('mousedown', function(e) {
+        isDragging = true;
+        startDragX = e.clientX;
+        scrollStartX = cardsContainer.scrollLeft;
+        cardsContainer.style.cursor = 'grabbing';
+        e.preventDefault();
       });
-    }, { passive: false });
 
-    // Поддержка перетаскивания мышью
-    let isDragging = false;
-    let startDragX = 0;
-    let scrollStartX = 0;
+      document.addEventListener('mousemove', function(e) {
+        if (!isDragging) return;
 
-    cardsContainer.addEventListener('mousedown', function(e) {
-      isDragging = true;
-      startDragX = e.clientX;
-      scrollStartX = cardsContainer.scrollLeft;
-      cardsContainer.style.cursor = 'grabbing';
-      e.preventDefault();
-    });
+        const deltaX = e.clientX - startDragX;
+        cardsContainer.scrollLeft = scrollStartX - deltaX;
+        e.preventDefault();
+      });
 
-    document.addEventListener('mousemove', function(e) {
-      if (!isDragging) return;
-
-      const deltaX = e.clientX - startDragX;
-      cardsContainer.scrollLeft = scrollStartX - deltaX;
-      e.preventDefault();
-    });
-
-    document.addEventListener('mouseup', function() {
-      if (isDragging) {
-        isDragging = false;
-        cardsContainer.style.cursor = 'grab';
-      }
-    });
+      document.addEventListener('mouseup', function() {
+        if (isDragging) {
+          isDragging = false;
+          cardsContainer.style.cursor = 'grab';
+        }
+      });
+    }
 
     // Предотвращаем выделение текста при перетаскивании и кликах
     cardsContainer.addEventListener('selectstart', function(e) {
